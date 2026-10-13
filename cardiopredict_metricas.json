@@ -1,0 +1,20 @@
+{
+  "n": 43,
+  "positivos": 14,
+  "negativos": 29,
+  "cv_folds": 5,
+  "roc_auc_cv": 0.7044334975369458,
+  "pr_auc_cv": 0.5896730431302956,
+  "brier_cv": 0.19233028816924222,
+  "matriz_confusion_umbral_0_5": [
+    [
+      24,
+      5
+    ],
+    [
+      8,
+      6
+    ]
+  ],
+  "advertencia": "Validación cruzada exploratoria; no validación externa. No usar para decisiones clínicas."
+}

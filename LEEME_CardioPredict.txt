@@ -1,0 +1,20 @@
+CardioPredict | versión exploratoria
+
+Archivos:
+- app.py: aplicación web en Streamlit
+- cardiopredict_modelo.joblib: modelo de regresión logística entrenado con 43 registros
+- cardiopredict_metricas.json: resultados de validación cruzada
+- requirements.txt: dependencias
+- build_cardiopredict.py: script para reconstruir el modelo (requiere CSV limpio, no incluido)
+
+Para usar localmente:
+1) Crea un ambiente Python (opcional).
+2) pip install -r requirements.txt
+3) streamlit run app.py
+
+Para publicarlo en Streamlit Community Cloud:
+1) Sube app.py, cardiopredict_modelo.joblib, cardiopredict_metricas.json y requirements.txt a un repositorio de GitHub.
+2) En share.streamlit.io crea una aplicación apuntando a app.py.
+3) No subas el archivo de participantes ni datos personales a un repositorio público.
+
+ATENCIÓN: Modelo exploratorio; no es un dispositivo médico ni un método diagnóstico. Versiones diferentes de scikit-learn pueden impedir la lectura de archivos joblib. Guardar o cargar modelos solo de fuentes confiables.
