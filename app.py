@@ -21,9 +21,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-logo_col1, logo_col2, logo_col3 = st.columns([1, 2, 1])
+logo_col1, logo_col2, logo_col3 = st.columns([1, 1, 1])
 with logo_col2:
-    st.image('assets/logo-uacm.png', use_container_width=True)
+    st.image('assets/logo-uacm.png', width=280)
 
 st.markdown(
     '''
