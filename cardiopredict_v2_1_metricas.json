@@ -1,0 +1,157 @@
+{
+  "version": "CardioPredict-v2.1-depurado",
+  "date": "2026-11-18",
+  "n_total_analyzed": 55,
+  "excluded_records": 3,
+  "exclusion_rule": "Se excluyeron por completo 2 registros con edad=126 años y 1 registro con PAS postejercicio=11 mmHg, a solicitud del investigador.",
+  "target": "Carga aterogénica elevada: ≥2 alteraciones entre 7 marcadores",
+  "target_distribution": {
+    "positive": 28,
+    "negative": 27
+  },
+  "alteration_distribution": {
+    "0": 13,
+    "1": 14,
+    "2": 15,
+    "3": 5,
+    "4": 6,
+    "5": 1,
+    "7": 1
+  },
+  "target_components": {
+    "Triglicéridos": "≥150 mg/dL",
+    "LDL-c": "≥130 mg/dL",
+    "HDL-c bajo": "<50 mg/dL en mujeres; <40 mg/dL en hombres",
+    "No-HDL-c": "≥160 mg/dL",
+    "IRC I": ">4.5",
+    "IRC II": ">3.0",
+    "TyG/HDL-c": "≥0.17; P75 actual=0.1675"
+  },
+  "component_frequencies": {
+    "TG ≥150": {
+      "n": 18,
+      "pct": 32.7272727273
+    },
+    "LDL ≥130": {
+      "n": 23,
+      "pct": 41.8181818182
+    },
+    "HDL bajo": {
+      "n": 10,
+      "pct": 18.1818181818
+    },
+    "No-HDL ≥160": {
+      "n": 20,
+      "pct": 36.3636363636
+    },
+    "IRC I >4.5": {
+      "n": 8,
+      "pct": 14.5454545455
+    },
+    "IRC II >3.0": {
+      "n": 4,
+      "pct": 7.2727272727
+    },
+    "TyG/HDL ≥0.17": {
+      "n": 12,
+      "pct": 21.8181818182
+    }
+  },
+  "features": [
+    {
+      "key": "bmi",
+      "label": "IMC",
+      "unit": "kg/m²"
+    },
+    {
+      "key": "waist",
+      "label": "Circunferencia de cintura",
+      "unit": "cm"
+    },
+    {
+      "key": "neck",
+      "label": "Circunferencia de cuello",
+      "unit": "cm"
+    },
+    {
+      "key": "fat_pct_bia",
+      "label": "Grasa corporal por BIA",
+      "unit": "%"
+    },
+    {
+      "key": "visceral_fat",
+      "label": "Grasa visceral",
+      "unit": "L"
+    },
+    {
+      "key": "skeletal_muscle",
+      "label": "Masa musculoesquelética",
+      "unit": "kg"
+    },
+    {
+      "key": "phase_angle",
+      "label": "Ángulo de fase",
+      "unit": "°"
+    },
+    {
+      "key": "grip_adj",
+      "label": "Fuerza de agarre ajustada",
+      "unit": "según base"
+    }
+  ],
+  "data_handling": "Un participante con ceros simultáneos en cuatro variables de BIA se conservó; esos ceros se trataron como mediciones faltantes y se imputaron por mediana dentro de cada pliegue.",
+  "algorithm": "Regresión logística penalizada L2 (Ridge)",
+  "final_C": 1,
+  "validation": "Validación cruzada anidada estratificada: 5 pliegues externos × 10 repeticiones; selección interna de C por AUC con 4 pliegues.",
+  "metrics_oof_nested": {
+    "auc": 0.6825396825396826,
+    "accuracy": 0.6545454545454545,
+    "balanced_accuracy": 0.6554232804232805,
+    "sensitivity": 0.6071428571428571,
+    "specificity": 0.7037037037037037,
+    "ppv": 0.68,
+    "npv": 0.6333333333333333,
+    "f1": 0.6415094339622641,
+    "brier": 0.22582123998923212,
+    "tn": 19,
+    "fp": 8,
+    "fn": 11,
+    "tp": 17
+  },
+  "bootstrap_95ci": {
+    "auc": [
+      0.5389706989247312,
+      0.8168044077134986
+    ],
+    "sensitivity": [
+      0.42421328671328673,
+      0.7857142857142857
+    ],
+    "specificity": [
+      0.5333333333333333,
+      0.8695652173913043
+    ],
+    "brier": [
+      0.18219638098408272,
+      0.2723205983416707
+    ]
+  },
+  "comparison": {
+    "anthropometry_3_auc": 0.5965608465608465,
+    "core8_auc": 0.6825396825396826,
+    "core8_plus_age_auc": 0.6428571428571429,
+    "core8_plus_cardio_auc": 0.656084656084656,
+    "core8_plus_age_cardio_auc": 0.6269841269841271,
+    "random_forest_fixed_auc": 0.5013227513227513,
+    "elastic_net_auc": 0.6812169312169313
+  },
+  "selected_model_reason": "El modelo core de 8 variables mostró la mejor combinación de discriminación, interpretabilidad y estabilidad. Edad y respuesta cardiovascular aguda no mejoraron el AUC; Random Forest fue inferior.",
+  "young_18_24": {
+    "n": 35,
+    "positive": 14,
+    "negative": 21,
+    "auc_oof_nested": 0.5272108843537415,
+    "note": "Desempeño insuficiente para uso específico en 18–24 años."
+  },
+  "limitations": "Modelo exploratorio de investigación. No estima eventos cardiovasculares ni reemplaza evaluación clínica. Requiere ampliación muestral y validación externa."
+}
