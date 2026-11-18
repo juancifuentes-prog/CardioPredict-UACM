@@ -43,69 +43,103 @@ st.markdown(
 )
 
 st.markdown(
-    '<div class="hero"><h1>CardioPredict</h1><p>Modelo antropométrico de alteraciones aterogénicas · Prototipo académico</p></div>',
+    '<div class="hero"><h1>CardioPredict</h1><p>Modelo exploratorio de carga aterogénica · Versión 2.1</p></div>',
     unsafe_allow_html=True
 )
 
-st.warning('Modelo exploratorio (n = 43). No constituye diagnóstico ni estima eventos cardiovasculares. No utilizar para decisiones clínicas.')
+st.warning('Modelo exploratorio depurado (n = 55). Estima la probabilidad de presentar ≥2 alteraciones aterogénicas; no constituye diagnóstico ni riesgo cardiovascular absoluto.')
 
 @st.cache_resource
 def cargar_modelo():
-    return joblib.load('cardiopredict_modelo.joblib')
+    return joblib.load('cardiopredict_v2_1_modelo.joblib')
 
 @st.cache_data
 def cargar_metricas():
-    with open('cardiopredict_metricas.json', encoding='utf-8') as f:
+    with open('cardiopredict_v2_1_metricas.json', encoding='utf-8') as f:
         return json.load(f)
 
-modelo=cargar_modelo()
-metricas=cargar_metricas()
+modelo = cargar_modelo()
+metricas = cargar_metricas()
 
-with st.form('formulario'):
-    st.subheader('Datos antropométricos')
-    a,b=st.columns(2)
+with st.form('formulario_v2_1'):
+    st.subheader('Antropometría, bioimpedancia y fuerza')
+    st.caption('Ingrese las ocho variables utilizadas por el modelo. La prueba de bicicleta y la edad no se incluyen porque no mejoraron el desempeño predictivo en la validación interna.')
+    a, b = st.columns(2)
     with a:
-        imc=st.number_input('IMC (kg/m²)',min_value=10.0,max_value=75.0,value=25.0,step=0.1)
-        cintura=st.number_input('Circunferencia de cintura (cm)',min_value=40.0,max_value=200.0,value=85.0,step=0.1)
+        imc = st.number_input('IMC (kg/m²)', min_value=10.0, max_value=70.0, value=25.0, step=0.1)
+        cintura = st.number_input('Circunferencia de cintura (cm)', min_value=40.0, max_value=180.0, value=85.0, step=0.1)
+        cuello = st.number_input('Circunferencia de cuello (cm)', min_value=20.0, max_value=60.0, value=34.0, step=0.1)
+        grasa_bia = st.number_input('Grasa corporal por BIA (%)', min_value=1.0, max_value=70.0, value=35.0, step=0.1)
     with b:
-        cuello=st.number_input('Circunferencia de cuello (cm)',min_value=15.0,max_value=70.0,value=35.0,step=0.1)
-        estatura=st.number_input('Estatura (cm)',min_value=100.0,max_value=230.0,value=170.0,step=0.1)
-    ratio=cintura/estatura
-    st.caption(f'Relación cintura/talla calculada automáticamente: {ratio:.3f} (cm/cm)')
-    enviado=st.form_submit_button('Calcular probabilidad',type='primary',use_container_width=True)
+        grasa_visceral = st.number_input('Grasa visceral (L)', min_value=0.1, max_value=10.0, value=1.9, step=0.1)
+        masa_muscular = st.number_input('Masa musculoesquelética (kg)', min_value=5.0, max_value=60.0, value=19.5, step=0.1)
+        angulo_fase = st.number_input('Ángulo de fase (°)', min_value=2.0, max_value=10.0, value=5.6, step=0.1)
+        fuerza = st.number_input('Fuerza de agarre ajustada', min_value=1.0, max_value=60.0, value=15.0, step=0.1)
+
+    enviado = st.form_submit_button('Calcular probabilidad', type='primary', use_container_width=True)
 
 if enviado:
-    datos=pd.DataFrame([{'IMC':imc,'Cintura_cm':cintura,'Cuello_cm':cuello,'Cintura_Talla':ratio}])
-    p=float(modelo.predict_proba(datos)[0,1])
+    datos = np.array([[
+        imc, cintura, cuello, grasa_bia,
+        grasa_visceral, masa_muscular, angulo_fase, fuerza
+    ]], dtype=float)
+
+    p = float(modelo.predict_proba(datos)[0, 1])
+
     st.divider()
     st.subheader('Resultado del modelo')
-    st.metric('Probabilidad estimada de ≥2 alteraciones aterogénicas',f'{p*100:.1f} %')
-    st.progress(min(max(p,0),1))
-    st.caption('Desenlace: presencia de al menos 2 entre hipertrigliceridemia, HDL bajo y LDL alto. La probabilidad no es equivalente al riesgo de infarto ni al diagnóstico de enfermedad cardiovascular.')
-    st.info('Interpretación exploratoria: la probabilidad surge de una regresión logística entrenada con la muestra disponible. No existe todavía un punto de corte clínico validado.')
-    report=pd.DataFrame([{
-        'fecha_calculo':datetime.now().strftime('%Y-%m-%d %H:%M'),
-        'IMC_kg_m2':imc,
-        'cintura_cm':cintura,
-        'cuello_cm':cuello,
-        'estatura_cm':estatura,
-        'cintura_talla':round(ratio,4),
-        'probabilidad_2_o_mas_alteraciones':round(p,5),
-        'version_modelo':'exploratorio-1',
-        'uso':'investigacion_no_diagnostico'
+    st.metric('Probabilidad estimada de carga aterogénica elevada', f'{p*100:.1f} %')
+    st.progress(min(max(p, 0.0), 1.0))
+
+    if p >= 0.50:
+        st.info('Clasificación exploratoria: patrón compatible con ≥2 alteraciones aterogénicas.')
+    else:
+        st.info('Clasificación exploratoria: patrón compatible con 0–1 alteración aterogénica.')
+
+    st.caption(
+        'El desenlace se definió por la presencia de ≥2 alteraciones entre: triglicéridos, LDL-c, HDL-c bajo por sexo, '
+        'no-HDL-c, IRC I, IRC II y TyG/HDL-c. La probabilidad no equivale a riesgo de infarto, evento cardiovascular '
+        'ni diagnóstico de enfermedad cardiovascular.'
+    )
+
+    report = pd.DataFrame([{
+        'fecha_calculo': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'IMC_kg_m2': imc,
+        'cintura_cm': cintura,
+        'cuello_cm': cuello,
+        'grasa_corporal_BIA_pct': grasa_bia,
+        'grasa_visceral_L': grasa_visceral,
+        'masa_musculoesqueletica_kg': masa_muscular,
+        'angulo_fase_grados': angulo_fase,
+        'fuerza_agarre_ajustada': fuerza,
+        'probabilidad_carga_aterogenica_ge2': round(p, 5),
+        'version_modelo': 'CardioPredict-v2.1-depurado',
+        'uso': 'investigacion_no_diagnostico'
     }])
+
     st.download_button(
         'Descargar reporte CSV (sin datos identificatorios)',
         data=report.to_csv(index=False).encode('utf-8-sig'),
-        file_name='cardiopredict_reporte.csv',
+        file_name='cardiopredict_v2_1_reporte.csv',
         mime='text/csv'
     )
 
 with st.expander('Desarrollo, validación y límites del modelo'):
-    st.write(f"**Muestra de entrenamiento:** {metricas['n']} participantes ({metricas['positivos']} con desenlace, {metricas['negativos']} sin desenlace).")
-    st.write(f"**AUC-ROC por validación cruzada estratificada de {metricas['cv_folds']} pliegues:** {metricas['roc_auc_cv']:.3f}")
-    st.write(f"**Brier en validación cruzada:** {metricas['brier_cv']:.3f}")
-    st.write('Variables: IMC, cintura, cuello y relación cintura/talla. Esta última depende matemáticamente de cintura y estatura. No existen aquí validaciones externas ni umbrales diagnósticos calibrados.')
-    st.write('La interfaz solo procesa las entradas de esta consulta; no incluye una base de pacientes. Si se despliega en un servidor externo, debe revisarse la política de privacidad y la seguridad del alojamiento.')
+    m = metricas['metrics_oof_nested']
+    ci = metricas['bootstrap_95ci']
+    st.write(f"**Muestra analizada:** {metricas['n_total_analyzed']} participantes "
+             f"({metricas['target_distribution']['positive']} con ≥2 alteraciones; "
+             f"{metricas['target_distribution']['negative']} con 0–1).")
+    st.write('**Depuración:** se excluyeron completamente 3 registros con mediciones erróneas previamente identificadas.')
+    st.write(f"**Modelo:** {metricas['algorithm']} · C = {metricas['final_C']}.")
+    st.write(f"**AUC-ROC (validación cruzada anidada):** {m['auc']:.3f} "
+             f"(IC95% bootstrap {ci['auc'][0]:.3f}–{ci['auc'][1]:.3f}).")
+    st.write(f"**Sensibilidad (umbral 0.50):** {m['sensitivity']*100:.1f}% · "
+             f"**Especificidad:** {m['specificity']*100:.1f}% · "
+             f"**Brier:** {m['brier']:.3f}.")
+    st.write('**Validación:** 5 pliegues externos × 10 repeticiones, con ajuste de la regularización dentro de cada entrenamiento.')
+    st.write('La incorporación de edad o de cambios agudos en FC, presión arterial y SpO₂ durante la bicicleta no mejoró el AUC, por lo que no se conservaron en esta versión.')
+    st.write('Random Forest mostró un desempeño inferior al modelo logístico penalizado.')
+    st.write('Este prototipo requiere una muestra mayor y validación externa antes de cualquier uso clínico.')
 
-st.caption('Prototipo de investigación académica · UACM · Modelo 1 · Requiere ampliación de muestra, evaluación de calibración y validación externa.')
+st.caption('Prototipo de investigación académica · UACM · CardioPredict v2.1 · Modelo no diagnóstico.')
